@@ -1,10 +1,14 @@
 # Create gif from individual steps
 import argparse
+
+from numpy.lib.function_base import append
 import cv2
 import glob
 import imageio
 import numpy as np
 import os
+import time
+from PIL import Image
 from tqdm import tqdm
 
 
@@ -12,7 +16,7 @@ def merge_images(img1, img2, weight):
     '''
     img1: RGB
     img2: RGB
-    w: weight of img1 in overlap 
+    weight: weight of img1 in overlap 
     '''
     w1 = img1.sum(axis=-1)
     w2 = img2.sum(axis=-1)
@@ -29,19 +33,18 @@ def merge_images(img1, img2, weight):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--src_dir')
-    # parser.add_argument('--weight')
+    parser.add_argument('--dst_dir')
+    parser.add_argument('--blur_kernel_size', type=int)
+    parser.add_argument('--fps', type=int)
     args = parser.parse_args()
     src_dir = args.src_dir
-    # weight = args.weight
+    dst_dir = args.dst_dir
+    blur_kernel_size = args.blur_kernel_size
+    fps = args.fps
+
     path_list = []
-    # region_list = [17, 5, 4, 3, 2, 10, 12, 13, 1, 8, 7, 16, 6, 9, 11, 14, 15, 18, 19]  #先画五官
-    region_list = [1, 17, 5, 4, 3, 2, 10, 12, 13, 8, 7, 16, 6, 9, 11, 14, 15, 18, 19]  #先画脸皮
-    imgs = []
-    result = np.zeros_like(cv2.imread(os.path.join(src_dir, 'face_parsing.png')))
-    H, W, C = result.shape
-    imgs.append(result)
-    for i in [5]:
-        dir = os.path.join(src_dir, f'edge_rgb_{i}')
+    for k in [blur_kernel_size]:
+        dir = os.path.join(src_dir, f'edge_rgb_blur_{k}')
         if not os.path.exists(dir):
             continue
         for name in os.listdir(dir):
@@ -49,6 +52,7 @@ if __name__ == '__main__':
             if not os.path.exists(path):
                 continue
             path_list.append(path)
+    region_list = [1, 5, 4, 3, 2, 10, 6, 8, 7, 12, 13, 11, 18, 17, 14, 16, 9, 15, 0]
     for i in region_list:
         dir = os.path.join(src_dir, f'face_parsing_{i}')
         if not os.path.exists(dir):
@@ -58,11 +62,34 @@ if __name__ == '__main__':
             if not os.path.exists(path):
                 continue
             path_list.append(path)
+    # dir = os.path.join(src_dir, 'input')
+    # if os.path.exists(dir):
+    #     name_list = os.listdir(dir)
+    #     name_list.sort()
+    #     name = name_list[-1]
+    #     path = os.path.join(dir, name)
+    #     if os.path.exists(path):
+    #         path_list.append(path)
+            
+    imgs = []
+    result = np.zeros_like(cv2.imread(os.path.join(src_dir, f'edge_rgb_blur_{k}')))
     for path in tqdm(path_list):
-        result = merge_images(result, cv2.cvtColor(cv2.cv2.imread(path), cv2.COLOR_BGR2RGB), 0.0)
+        result = merge_images(result, cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB), 0.0)
         imgs.append(result.copy())
-    gif = imageio.mimsave(f'painting.gif', imgs, 'GIF', duration=0.01)
-    videoWriter = cv2.VideoWriter(f'painting.avi', cv2.VideoWriter_fourcc('I','4','2','0'), 30, (W, H))
+    
+    cv2.imwrite(f'{dst_dir}/painting.png', cv2.cvtColor(result, cv2.COLOR_RGB2BGR))
+    
+    st_time = time.time()
+    H, W, C = result.shape
+    videoWriter = cv2.VideoWriter(f'{dst_dir}/painting.avi', cv2.VideoWriter_fourcc('I','4','2','0'), int(fps), (W, H))
     for img in imgs:
         videoWriter.write(cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
     videoWriter.release()
+    ed_time = time.time()
+    print(f'Save video successfully! {ed_time - st_time}s')
+    
+    st_time = time.time()
+    # gif = imageio.mimsave(f'painting.gif', imgs, 'GIF', fps=fps)      # five times slower than Pillow Image save
+    Image.fromarray(result).save(f'{dst_dir}/painting.gif', save_all=True, append_images=[Image.fromarray(img) for i, img in enumerate(imgs)], duration=int(1000/fps))
+    ed_time = time.time()
+    print(f'Save gif successfully! {ed_time - st_time}s')

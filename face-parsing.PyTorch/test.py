@@ -21,30 +21,30 @@ def mask_img(img, mask):
 def vis_parsing_maps(im, parsing_anno, stride, save_im, dst_dir):
     # Colors for all 20 parts
     part_colors = [
-        [255, 0, 0],    #
-        [255, 85, 0],   #
-        [255, 170, 0],  #
-        [255, 0, 85],   #
-        [255, 0, 170],  #
-        [0, 255, 0],    #
-        [85, 255, 0],   #
-        [170, 255, 0],  #
-        [0, 255, 85],   #
-        [0, 255, 170],  #
-        [0, 0, 255],    #
-        [85, 0, 255],   #
-        [170, 0, 255],  #
-        [0, 85, 255],   #
-        [0, 170, 255],  #
-        [255, 255, 0],  #
-        [255, 255, 85], #
-        [255, 255, 170],#
-        [255, 0, 255],  #
-        [255, 85, 255], #
-        [255, 170, 255],#  
-        [0, 255, 255],  #
-        [85, 255, 255], #
-        [170, 255, 255]]#
+        [255, 0, 0],    #background,0
+        [255, 85, 0],   #skin,1
+        [255, 170, 0],  #r_brow,2
+        [255, 0, 85],   #l_brow,3
+        [255, 0, 170],  #r_eye,4
+        [0, 255, 0],    #l_eye,5
+        [85, 255, 0],   #eye_g,6
+        [170, 255, 0],  #r_ear,7
+        [0, 255, 85],   #l_ear,8
+        [0, 255, 170],  #ear_r,9
+        [0, 0, 255],    #nose,10
+        [85, 0, 255],   #mouth,11
+        [170, 0, 255],  #u_lip,12
+        [0, 85, 255],   #l_lip,13
+        [0, 170, 255],  #neck,14
+        [255, 255, 0],  #neck_l,15
+        [255, 255, 85], #cloth,16
+        [255, 255, 170],#hair,17
+        [255, 0, 255],  #hat,18
+        [255, 85, 255], #19
+        [255, 170, 255],#20
+        [0, 255, 255],  #21
+        [85, 255, 255], #22
+        [170, 255, 255]]#23
 
     im = np.array(im)
     vis_im = im.copy().astype(np.uint8)
@@ -52,12 +52,14 @@ def vis_parsing_maps(im, parsing_anno, stride, save_im, dst_dir):
     vis_parsing_anno = cv2.resize(vis_parsing_anno, None, fx=stride, fy=stride, interpolation=cv2.INTER_NEAREST)
     vis_parsing_anno_color = np.zeros((vis_parsing_anno.shape[0], vis_parsing_anno.shape[1], 3)) + 255
 
-    num_of_class = np.max(vis_parsing_anno)
+    #num_of_class = np.max(vis_parsing_anno)
 
-    for pi in range(1, num_of_class + 1):
+    for pi in range(19):
         index = np.where(vis_parsing_anno == pi)
+        if index[0].size == 0:
+            continue
         vis_parsing_anno_color[index[0], index[1], :] = part_colors[pi]
-        mask = np.zeros((vis_parsing_anno.shape[0], vis_parsing_anno.shape[1], 3)) 
+        mask = np.zeros((vis_parsing_anno.shape[0], vis_parsing_anno.shape[1], 3))
         mask[index[0], index[1], :] = [1, 1, 1]
         parsing = mask_img(im, mask)
         cv2.imwrite(f'{dst_dir}/face_parsing_{pi}.png', cv2.cvtColor(parsing, cv2.COLOR_RGB2BGR))
@@ -67,9 +69,8 @@ def vis_parsing_maps(im, parsing_anno, stride, save_im, dst_dir):
 
     # Save result or not
     if save_im:
-        cv2.imwrite(f'{dst_dir}/face_parsing_gray.png', vis_parsing_anno)
-        cv2.imwrite(f'{dst_dir}/face_parsing_rgb.png', vis_parsing_anno_color)
-        #cv2.imwrite(dst_dir, vis_im, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+        # cv2.imwrite(f'{dst_dir}/face_parsing_gray.png', vis_parsing_anno)
+        # cv2.imwrite(f'{dst_dir}/face_parsing_rgb.png', vis_parsing_anno_color)
         cv2.imwrite(f'{dst_dir}/face_parsing.png', vis_im)
     # return vis_im
 
@@ -105,3 +106,6 @@ if __name__ == "__main__":
     result_dir = args.result_dir
     os.makedirs(result_dir, exist_ok=True)
     evaluate(src_path=img_path, dst_dir=result_dir)
+    # img = cv2.imread(img_path)
+    # img = cv2.resize(img, (512, 512))
+    # cv2.imwrite(result_dir + '/input.jpg', img)
