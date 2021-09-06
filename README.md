@@ -2,7 +2,9 @@
 
 **Face Painter** simulates the process of painter painting portrait oil painting.
 
-![demo](assets/demo.gif)
+|           Input            |          Output          |
+| :------------------------: | :----------------------: |
+| ![input](assets/input.jpg) | ![demo](assets/demo.gif) |
 
 ## About The Project
 
