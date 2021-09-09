@@ -69,8 +69,8 @@ def vis_parsing_maps(im, parsing_anno, stride, save_im, dst_dir):
 
     # Save result or not
     if save_im:
-        # cv2.imwrite(f'{dst_dir}/face_parsing_gray.png', vis_parsing_anno)
-        # cv2.imwrite(f'{dst_dir}/face_parsing_rgb.png', vis_parsing_anno_color)
+        cv2.imwrite(f'{dst_dir}/face_parsing_gray.png', vis_parsing_anno)
+        cv2.imwrite(f'{dst_dir}/face_parsing_rgb.png', vis_parsing_anno_color)
         cv2.imwrite(f'{dst_dir}/face_parsing.png', vis_im)
     # return vis_im
 

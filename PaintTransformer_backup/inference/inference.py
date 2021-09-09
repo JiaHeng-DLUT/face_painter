@@ -14,8 +14,12 @@ from tqdm import tqdm
 idx = 0
 
 
-def save_img(img, output_path, mask):
-    result = (img.data.cpu().numpy().transpose((1, 2, 0)) * 255).astype(np.uint8)
+def save_img(img, output_path, mask, valid_zone):
+    (y, x, h, w) = valid_zone
+    output = (img.data.cpu().numpy().transpose((1, 2, 0)) * 255).astype(np.uint8)
+    output = cv2.resize(output, (w, h), cv2.INTER_NEAREST)
+    result = np.zeros_like(mask).astype(np.uint8)
+    result[y:y+h, x:x+w] = output
     if mask is not None:
         result = result * mask
     result = Image.fromarray(np.uint8(result))
@@ -84,7 +88,7 @@ def param2stroke(param, H, W, meta_brushes):
 
 
 def param2img_serial(
-        param, decision, meta_brushes, cur_canvas, frame_dir, has_border, original_h, original_w, original_img):
+        param, decision, meta_brushes, cur_canvas, frame_dir, has_border, original_h, original_w, original_img, valid_zone):
     """
     Input stroke parameters and decisions for each patch, meta brushes, current canvas, frame directory,
     and whether there is a border (if intermediate painting results are required).
@@ -174,7 +178,7 @@ def param2img_serial(
             if frame_dir is not None:
                 frame = crop(cur_canvas[:, :, patch_size_y // factor:-patch_size_y // factor,
                              patch_size_x // factor:-patch_size_x // factor], original_h, original_w)
-                save_img(frame[0], os.path.join(frame_dir, '%03d.png' % idx), original_img)
+                save_img(frame[0], os.path.join(frame_dir, '%03d.png' % idx), original_img, valid_zone)
 
     if odd_idx_y.shape[0] > 0 and odd_idx_x.shape[0] > 0:
         for i in range(s):
@@ -190,7 +194,7 @@ def param2img_serial(
             if frame_dir is not None:
                 frame = crop(cur_canvas[:, :, patch_size_y // factor:-patch_size_y // factor,
                              patch_size_x // factor:-patch_size_x // factor], original_h, original_w)
-                save_img(frame[0], os.path.join(frame_dir, '%03d.png' % idx), original_img)
+                save_img(frame[0], os.path.join(frame_dir, '%03d.png' % idx), original_img, valid_zone)
 
     if odd_idx_y.shape[0] > 0 and even_idx_x.shape[0] > 0:
         for i in range(s):
@@ -205,7 +209,7 @@ def param2img_serial(
             if frame_dir is not None:
                 frame = crop(cur_canvas[:, :, patch_size_y // factor:-patch_size_y // factor,
                              patch_size_x // factor:-patch_size_x // factor], original_h, original_w)
-                save_img(frame[0], os.path.join(frame_dir, '%03d.png' % idx), original_img)
+                save_img(frame[0], os.path.join(frame_dir, '%03d.png' % idx), original_img, valid_zone)
 
     if even_idx_y.shape[0] > 0 and odd_idx_x.shape[0] > 0:
         for i in range(s):
@@ -220,7 +224,7 @@ def param2img_serial(
             if frame_dir is not None:
                 frame = crop(cur_canvas[:, :, patch_size_y // factor:-patch_size_y // factor,
                              patch_size_x // factor:-patch_size_x // factor], original_h, original_w)
-                save_img(frame[0], os.path.join(frame_dir, '%03d.png' % idx), original_img)
+                save_img(frame[0], os.path.join(frame_dir, '%03d.png' % idx), original_img, valid_zone)
 
     cur_canvas = cur_canvas[:, :, patch_size_y // 4:-patch_size_y // 4, patch_size_x // 4:-patch_size_x // 4]
 
@@ -345,10 +349,18 @@ def param2img_parallel(param, decision, meta_brushes, cur_canvas):
     return cur_canvas
 
 
-def read_img(img_path, img_type='RGB', h=None, w=None):
-    img = Image.open(img_path).convert(img_type)
-    if h is not None and w is not None:
-        img = img.resize((w, h), resample=Image.NEAREST)
+def read_img(img_path, img_type, valid_zone=None):
+    if valid_zone is not None:
+        (y, x, h, w) = valid_zone
+        img = cv2.imread(img_path)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = img[y:y+h, x:x+w]
+        r = 1024 / max(h, w)
+        img = cv2.resize(img, (int(w * r), int(h * r)), cv2.INTER_NEAREST)
+    else:
+        img = Image.open(img_path).convert(img_type)
+    # if h is not None and w is not None:
+    #     img = img.resize((w, h), resample=Image.NEAREST)
     img = np.array(img)
     if img.ndim == 2:
         img = np.expand_dims(img, axis=-1)
@@ -411,12 +423,21 @@ def inference(src_dir, model_path, output_dir, need_animation=False, resize_h=No
                 os.mkdir(frame_dir)
 
         with torch.no_grad():
-            original_img = read_img(input_path, 'RGB', resize_h, resize_w).to(device)
             mask = cv2.imread(input_path)
             # mask = cv2.resize(mask, (resize_h, resize_w), interpolation=cv2.INTER_NEAREST)
             mask = mask.sum(axis=-1)
             mask = (mask != 0).astype(int)
             mask = np.stack([mask, mask, mask], axis=-1)
+            index = np.where(mask != 0)
+            y_max = max(index[0])
+            y_min = min(index[0])
+            x_max = max(index[1])
+            x_min = min(index[1])
+            H = y_max - y_min
+            W = x_max - x_min
+            valid_zone = (y_min, x_min, H, W)
+            original_img = read_img(input_path, 'RGB', valid_zone).to(device)
+            
             original_h, original_w = original_img.shape[-2:]
             K = max(math.ceil(math.log2(max(original_h, original_w) / patch_size)), 0)
             original_img_pad_size = patch_size * (2 ** K)
@@ -455,7 +476,7 @@ def inference(src_dir, model_path, output_dir, need_animation=False, resize_h=No
                 param[..., 2:4] = param[..., 2:4] / 2
                 if serial:
                     final_result = param2img_serial(param, decision, meta_brushes, final_result,
-                                                    frame_dir, False, original_h, original_w, mask)
+                                                    frame_dir, False, original_h, original_w, mask, valid_zone)
                 else:
                     final_result = param2img_parallel(param, decision, meta_brushes, final_result)
 
@@ -492,13 +513,13 @@ def inference(src_dir, model_path, output_dir, need_animation=False, resize_h=No
             param[..., 2:4] = param[..., 2:4] / 2
             if serial:
                 final_result = param2img_serial(param, decision, meta_brushes, final_result,
-                                                frame_dir, True, original_h, original_w, mask)
+                                                frame_dir, True, original_h, original_w, mask, valid_zone)
             else:
                 final_result = param2img_parallel(param, decision, meta_brushes, final_result)
-            final_result = final_result[:, :, border_size:-border_size, border_size:-border_size]
+            # final_result = final_result[:, :, border_size:-border_size, border_size:-border_size]
 
-            final_result = crop(final_result, original_h, original_w)
-            save_img(final_result[0], output_path, mask)
+            # final_result = crop(final_result, original_h, original_w)
+            # save_img(final_result[0], output_path, mask, valid_zone)
 
 
 if __name__ == '__main__':

@@ -30,6 +30,12 @@ def merge_images(img1, img2, weight):
     img = img1 * w1 + img2 * w2
     return img.astype(np.uint8)
 
+
+def inpaint(img, mask):
+    res = cv2.inpaint(img, mask, 1, cv2.INPAINT_NS)
+    return res
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--src_dir')
@@ -43,6 +49,8 @@ if __name__ == '__main__':
     fps = args.fps
 
     path_list = []
+    imgs = []
+    result = np.zeros_like(cv2.imread(os.path.join(src_dir, f'edge_rgb_blur_{blur_kernel_size}')))
     for k in [blur_kernel_size]:
         dir = os.path.join(src_dir, f'edge_rgb_blur_{k}')
         if not os.path.exists(dir):
@@ -52,7 +60,13 @@ if __name__ == '__main__':
             if not os.path.exists(path):
                 continue
             path_list.append(path)
+            result = merge_images(result, cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB), 0.0)
+            imgs.append(result.copy())
+
     region_list = [1, 5, 4, 3, 2, 10, 6, 8, 7, 12, 13, 11, 18, 17, 14, 16, 9, 15, 0]
+    mask = cv2.imread(f'{dst_dir}/face_parsing_rgb.png')
+    mask = cv2.Canny(image=mask, threshold1=100, threshold2=200)     # Canny Edge Detection
+    mask = cv2.dilate(mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3)))
     for i in region_list:
         dir = os.path.join(src_dir, f'face_parsing_{i}')
         if not os.path.exists(dir):
@@ -62,20 +76,16 @@ if __name__ == '__main__':
             if not os.path.exists(path):
                 continue
             path_list.append(path)
-    # dir = os.path.join(src_dir, 'input')
-    # if os.path.exists(dir):
-    #     name_list = os.listdir(dir)
-    #     name_list.sort()
-    #     name = name_list[-1]
-    #     path = os.path.join(dir, name)
-    #     if os.path.exists(path):
-    #         path_list.append(path)
-            
-    imgs = []
-    result = np.zeros_like(cv2.imread(os.path.join(src_dir, f'edge_rgb_blur_{k}')))
-    for path in tqdm(path_list):
-        result = merge_images(result, cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB), 0.0)
+            result = merge_images(result, cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB), 0.0)
+            imgs.append(result.copy())
+        result = inpaint(result, mask)
         imgs.append(result.copy())
+
+    # imgs = []
+    # result = np.zeros_like(cv2.imread(os.path.join(src_dir, f'edge_rgb_blur_{k}')))
+    # for path in tqdm(path_list):
+    #     result = merge_images(result, cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB), 0.0)
+    #     imgs.append(result.copy())
     
     cv2.imwrite(f'{dst_dir}/painting.png', cv2.cvtColor(result, cv2.COLOR_RGB2BGR))
     
