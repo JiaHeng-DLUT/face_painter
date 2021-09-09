@@ -106,6 +106,6 @@ if __name__ == "__main__":
     result_dir = args.result_dir
     os.makedirs(result_dir, exist_ok=True)
     evaluate(src_path=img_path, dst_dir=result_dir)
-    # img = cv2.imread(img_path)
-    # img = cv2.resize(img, (512, 512))
-    # cv2.imwrite(result_dir + '/input.jpg', img)
+    img = cv2.imread(img_path)
+    img = cv2.resize(img, (512, 512))
+    cv2.imwrite(result_dir + '/input.jpg', img)
