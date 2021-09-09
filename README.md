@@ -1,10 +1,15 @@
 # Face Painter
 
-**Face Painter** simulates the process of painter painting portrait oil painting.
+**Face Painter** simulates the process of painter painting portrait oil painting. Instead of making up a portrait painting by color blocks directly (Paint once), we parse the face at first, paint each part separately then and put them together finally (Paint in order), by which we get a portrait oil painting with clear outlines and pronounced facial features. 
 
-|           Input            |             Process              |          Final painting          |
-| :------------------------: | :------------------------------: | :------------------------------: |
-| ![input](assets/input.jpg) | ![painting](assets/painting.gif) | ![painting](assets/painting.png) |
+|           Input            |               Face parsing               |
+| :------------------------: | :--------------------------------------: |
+| ![input](assets/input.jpg) | ![face_parsing](assets/face_parsing.png) |
+
+|                |                  Process                   |               Final painting               |
+| :------------: | :----------------------------------------: | :----------------------------------------: |
+|   Paint once   | ![painting_once](assets/painting_once.gif) | ![painting_once](assets/painting_once.png) |
+| Paint in order |      ![painting](assets/painting.gif)      |      ![painting](assets/painting.png)      |
 
 ## About The Project
 
