@@ -536,4 +536,4 @@ if __name__ == '__main__':
          need_animation=True,  # whether need intermediate results for animation.
          resize_h=None,         # resize original input to this size. None means do not resize.
          resize_w=None,         # resize original input to this size. None means do not resize.
-         serial=False)          # if need animation, serial must be True.
+         serial=True)          # if need animation, serial must be True.
