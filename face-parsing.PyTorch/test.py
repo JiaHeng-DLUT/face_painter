@@ -23,13 +23,13 @@ def vis_parsing_maps(im, parsing_anno, stride, save_im, dst_dir):
     part_colors = [
         [255, 0, 0],    #background,0
         [255, 85, 0],   #skin,1
-        [255, 170, 0],  #r_brow,2
-        [255, 0, 85],   #l_brow,3
-        [255, 0, 170],  #r_eye,4
-        [0, 255, 0],    #l_eye,5
+        [255, 170, 0],  #l_brow,2
+        [255, 0, 85],   #r_brow,3
+        [255, 0, 170],  #l_eye,4
+        [0, 255, 0],    #r_eye,5
         [85, 255, 0],   #eye_g,6
-        [170, 255, 0],  #r_ear,7
-        [0, 255, 85],   #l_ear,8
+        [170, 255, 0],  #l_ear,7
+        [0, 255, 85],   #r_ear,8
         [0, 255, 170],  #ear_r,9
         [0, 0, 255],    #nose,10
         [85, 0, 255],   #mouth,11

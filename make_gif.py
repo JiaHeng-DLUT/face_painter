@@ -67,7 +67,13 @@ if __name__ == '__main__':
             result = merge_images(result, cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB), 0.0)
             imgs.append(result.copy())
 
-    region_list = [1, 5, 4, 3, 2, 10, 6, 8, 7, 12, 13, 11, 18, 17, 14, 16, 9, 15, 0]
+    region_list = [1, 
+                    2, 3, 4, 5, 6, 
+                    10, 7, 8, 
+                    12, 13, 11, 
+                    18, 17, 14, 16, 
+                    9, 15, 
+                    0]
     mask = cv2.imread(f'{dst_dir}/face_parsing_rgb.png')
     mask = cv2.Canny(image=mask, threshold1=100, threshold2=200)     # Canny Edge Detection
     mask = cv2.dilate(mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3)))
