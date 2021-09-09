@@ -32,6 +32,9 @@ def merge_images(img1, img2, weight):
 
 
 def inpaint(img, mask):
+    '''
+    From: https://stackoverflow.com/questions/60501986/why-does-the-inpaint-method-not-remove-the-text-from-ic-image
+    '''
     res = cv2.inpaint(img, mask, 1, cv2.INPAINT_NS)
     return res
 
@@ -48,6 +51,7 @@ if __name__ == '__main__':
     blur_kernel_size = args.blur_kernel_size
     fps = args.fps
 
+    st_time = time.time()
     path_list = []
     imgs = []
     result = np.zeros_like(cv2.imread(os.path.join(src_dir, f'edge_rgb_blur_{blur_kernel_size}')))
@@ -89,7 +93,6 @@ if __name__ == '__main__':
     
     cv2.imwrite(f'{dst_dir}/painting.png', cv2.cvtColor(result, cv2.COLOR_RGB2BGR))
     
-    st_time = time.time()
     H, W, C = result.shape
     videoWriter = cv2.VideoWriter(f'{dst_dir}/painting.avi', cv2.VideoWriter_fourcc('I','4','2','0'), int(fps), (W, H))
     for img in imgs:
@@ -100,6 +103,7 @@ if __name__ == '__main__':
     
     st_time = time.time()
     # gif = imageio.mimsave(f'painting.gif', imgs, 'GIF', fps=fps)      # five times slower than Pillow Image save
-    Image.fromarray(result).save(f'{dst_dir}/painting.gif', save_all=True, append_images=[Image.fromarray(img) for i, img in enumerate(imgs)], duration=int(1000/fps))
+    append_images = [Image.fromarray(img) for i, img in enumerate(imgs) if i % int(fps / 10) == 0]
+    Image.fromarray(result).save(f'{dst_dir}/painting.gif', save_all=True, loop=0, append_images=append_images, fps=10)
     ed_time = time.time()
     print(f'Save gif successfully! {ed_time - st_time}s')
