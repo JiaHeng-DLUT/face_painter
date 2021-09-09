@@ -2,9 +2,9 @@
 
 **Face Painter** simulates the process of painter painting portrait oil painting.
 
-|           Input            |          Output          |
-| :------------------------: | :----------------------: |
-| ![input](assets/input.jpg) | ![demo](assets/demo.gif) |
+|           Input            |             Process              |          Final painting          |
+| :------------------------: | :------------------------------: | :------------------------------: |
+| ![input](assets/input.jpg) | ![painting](assets/painting.gif) | ![painting](assets/painting.png) |
 
 ## About The Project
 
@@ -12,13 +12,18 @@ According to four principles, from big to small, from top to bottom, from left t
 
 1. rough outline
 2. face skin
-3. eyes, eyebrows
-4. nose, glasses and ears
+3. eyebrows, eyes and glasses
+4. nose and ears
 5. lips and mouth
 6. hat, hair, neck and cloth
 7. ear rings and neck lace
 8. background
-9. refinement
+
+The core methods are as follows:
+
+1. Canny edge detector -> detect face outline
+2. Face segmentation network -> parse face into different parts
+3. Painting network -> paint an image
 
 ## Getting Started
 
@@ -48,7 +53,7 @@ Note that Face Painter is only tested in Ubuntu, and may be not suitable for Win
 python run.py
 ```
 
-The painting output can be found in the `output` directory by default. 
+The painting output can be found in the `output` directory by default, which takes about 15 minutes. 
 
 ## Roadmap
 
