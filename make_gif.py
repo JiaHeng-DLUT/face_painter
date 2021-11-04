@@ -59,7 +59,7 @@ if __name__ == '__main__':
         dir = os.path.join(src_dir, f'edge_rgb_blur_{k}')
         if not os.path.exists(dir):
             continue
-        for name in os.listdir(dir):
+        for name in sorted(os.listdir(dir)):
             path = os.path.join(dir, name)
             if not os.path.exists(path):
                 continue
@@ -81,7 +81,7 @@ if __name__ == '__main__':
         dir = os.path.join(src_dir, f'face_parsing_{i}')
         if not os.path.exists(dir):
             continue
-        for name in os.listdir(dir):
+        for name in sorted(os.listdir(dir)):
             path = os.path.join(dir, name)
             if not os.path.exists(path):
                 continue
